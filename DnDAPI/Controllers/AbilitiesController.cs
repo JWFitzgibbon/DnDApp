@@ -30,7 +30,7 @@ namespace DnDApi.Controllers
             return await _context.Abilities.ToListAsync();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<Ability>> GetAbility(int id)
         {
           if (_context.Abilities == null)
@@ -54,10 +54,10 @@ namespace DnDApi.Controllers
             {
                 return NotFound();
             }
-            return await _context.Abilities.Where(a => a.Name.Contains(name)).ToListAsync();
+            return await _context.Abilities.Where(a => a.Name.StartsWith(name)).ToListAsync();
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> PutAbility(int id, Ability ability)
         {
             if (id != ability.AbilityId)
@@ -99,7 +99,7 @@ namespace DnDApi.Controllers
             return CreatedAtAction("GetAbility", new { id = ability.AbilityId }, ability);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteAbility(int id)
         {
             if (_context.Abilities == null)

@@ -31,7 +31,7 @@ namespace DnDApi.Controllers
             return await _context.Characters.ToListAsync();
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<Character>> GetCharacter(int id)
         {
           if (_context.Characters == null)
@@ -55,10 +55,10 @@ namespace DnDApi.Controllers
             {
                 return NotFound();
             }
-            return await _context.Characters.Where(c => c.Name.Contains(name)).ToListAsync();
+            return await _context.Characters.Where(c => c.Name.StartsWith(name)).ToListAsync();
         }
 
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> PutCharacter(int id, Character character)
         {
             if (id != character.CharacterId)
@@ -100,7 +100,7 @@ namespace DnDApi.Controllers
             return CreatedAtAction("GetCharacter", new { id = character.CharacterId }, character);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteCharacter(int id)
         {
             if (_context.Characters == null)
