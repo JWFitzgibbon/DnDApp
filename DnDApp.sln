@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DnDAPI", "DnDAPI\DnDAPI.csproj", "{DDF9EA50-EF79-40DF-89C8-D7AFFEF4EFF7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DDF9EA50-EF79-40DF-89C8-D7AFFEF4EFF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDF9EA50-EF79-40DF-89C8-D7AFFEF4EFF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDF9EA50-EF79-40DF-89C8-D7AFFEF4EFF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDF9EA50-EF79-40DF-89C8-D7AFFEF4EFF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A2DA69FA-68CA-4634-A739-A5688F9C1DD2}
+	EndGlobalSection
+EndGlobal
