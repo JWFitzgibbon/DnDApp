@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DnDAPI.Models;
+using System.Net;
 
 namespace DnDApi.Controllers
 {
@@ -14,29 +15,40 @@ namespace DnDApi.Controllers
     public class AbilitiesController : ControllerBase
     {
         private readonly RepositoryContext _context;
+        protected ResponseHandler _response;
 
         public AbilitiesController(RepositoryContext context)
         {
             _context = context;
+            _response = new ResponseHandler();
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ability>>> GetAbilities()
+        public async Task<ActionResult<ResponseHandler>> GetAbilities()
         {
-          if (_context.Abilities == null)
-          {
-              return NotFound();
-          }
-            return await _context.Abilities.ToListAsync();
+            try
+            {
+                _response.Result = await _context.Abilities.ToListAsync();
+                _response.StatusCode = HttpStatusCode.OK;
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.Message };
+            }
+
+            return _response;
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Ability>> GetAbility(int id)
         {
-          if (_context.Abilities == null)
-          {
-              return NotFound();
-          }
+            if (_context.Abilities == null)
+            {
+                return NotFound();
+            }
             var ability = await _context.Abilities.FindAsync(id);
 
             if (ability == null)
@@ -89,10 +101,10 @@ namespace DnDApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Ability>> PostAbility(Ability ability)
         {
-          if (_context.Abilities == null)
-          {
-              return Problem("Entity set 'RepositoryContext.Abilities'  is null.");
-          }
+            if (_context.Abilities == null)
+            {
+                return Problem("Entity set 'RepositoryContext.Abilities'  is null.");
+            }
             _context.Abilities.Add(ability);
             await _context.SaveChangesAsync();
 
