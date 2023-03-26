@@ -185,7 +185,7 @@ namespace DnDApi.Controllers
                     return NotFound();
                 }
 
-                _repo.Remove(character);
+                await _repo.Remove(character);
                 _response.StatusCode = HttpStatusCode.NoContent;
 
                 return Ok(_response);
