@@ -8,11 +8,9 @@ public class Character
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int CharacterId { get; set; }
-
     [Required(ErrorMessage = "A name is required")]
     public string Name { get; set; } = "Nameless";
     public int Level { get; set; }
-
     [Required(ErrorMessage = "A class is required")]
     public string Class { get; set; } = string.Empty;
     public string? Archetype { get; set; }
@@ -26,4 +24,7 @@ public class Character
     public int INT { get; set; }
     public int WIS { get; set; }
     public int CHA { get; set; }
+
+    public DateTime CreatedDate { get; set; }
+    public DateTime LastUpdatedDate { get; set;}
 }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DnDAPI.Models;
 using System.Net;
+using DnDAPI.Contracts;
 
 namespace DnDApi.Controllers
 {
@@ -14,12 +15,12 @@ namespace DnDApi.Controllers
     [ApiController]
     public class CharactersController : ControllerBase
     {
-        private readonly RepositoryContext _context;
+        private readonly ICharacterRepository _repo;
         protected ResponseHandler _response;
 
-        public CharactersController(RepositoryContext context)
+        public CharactersController(ICharacterRepository repo)
         {
-            _context = context;
+            _repo = repo;
             _response = new ResponseHandler();
         }
 
@@ -29,7 +30,7 @@ namespace DnDApi.Controllers
         {
             try
             {
-                _response.Result = await _context.Characters.ToListAsync();
+                _response.Result = await _repo.GetAll();
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -47,7 +48,7 @@ namespace DnDApi.Controllers
         {
             try
             {
-                if (_context.Characters == null)
+                if (_repo == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     return NotFound(_response);
@@ -59,7 +60,7 @@ namespace DnDApi.Controllers
                     return BadRequest(_response);
                 }
 
-                var character = await _context.Characters.FindAsync(id);
+                var character = await _repo.Get(c => c.CharacterId == id);
 
                 if (character == null)
                 {
@@ -86,13 +87,13 @@ namespace DnDApi.Controllers
         {
             try
             {
-                if (_context.Characters == null)
+                if (_repo == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     return NotFound(_response);
                 }
 
-                _response.Result = await _context.Characters.Where(c => c.Name.StartsWith(name)).ToListAsync();
+                _response.Result = await _repo.GetAll(c => c.Name.StartsWith(name));
                 _response.StatusCode = HttpStatusCode.OK;
 
                 return Ok(_response);
@@ -117,11 +118,9 @@ namespace DnDApi.Controllers
                     return BadRequest();
                 }
 
-                _context.Entry(character).State = EntityState.Modified;
-
                 try
                 {
-                    await _context.SaveChangesAsync();
+                    await _repo.Update(character);
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -154,13 +153,7 @@ namespace DnDApi.Controllers
         {
             try
             {
-                if (_context.Characters == null)
-                {
-                    return Problem("Entity set 'RepositoryContext.Characters'  is null.");
-                }
-
-                _context.Characters.Add(character);
-                await _context.SaveChangesAsync();
+                await _repo.Create(character);
                 _response.Result = character;
                 _response.StatusCode = HttpStatusCode.Created;
 
@@ -180,18 +173,19 @@ namespace DnDApi.Controllers
         {
             try
             {
-                if (_context.Characters == null)
+                if (_repo == null)
                 {
                     return NotFound();
                 }
-                var character = await _context.Characters.FindAsync(id);
+
+                var character = await _repo.Get(c => c.CharacterId == id);
+
                 if (character == null)
                 {
                     return NotFound();
                 }
 
-                _context.Characters.Remove(character);
-                await _context.SaveChangesAsync();
+                _repo.Remove(character);
                 _response.StatusCode = HttpStatusCode.NoContent;
 
                 return Ok(_response);
@@ -207,7 +201,9 @@ namespace DnDApi.Controllers
 
         private bool CharacterExists(int id)
         {
-            return (_context.Characters?.Any(e => e.CharacterId == id)).GetValueOrDefault();
+            var character = _repo.Get(c => c.CharacterId == id);
+
+            return character != null;
         }
     }
 }

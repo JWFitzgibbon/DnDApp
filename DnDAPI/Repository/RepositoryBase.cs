@@ -16,13 +16,13 @@ namespace DnDAPI.Repository
             this.dbSet = _context.Set<T>();
         }
 
-        public async Task CreateAsync(T entity)
+        public async Task Create(T entity)
         {
             await _context.AddAsync(entity);
             await SaveAsync();
         }
 
-        public async Task<List<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null)
+        public async Task<List<T>> GetAll(Expression<Func<T, bool>>? filter = null)
         {
             IQueryable<T> query = dbSet;
             if (filter != null)
@@ -33,7 +33,7 @@ namespace DnDAPI.Repository
             return await query.ToListAsync();
         }
 
-        public async Task<T> GetAsync(Expression<Func<T, bool>> filter = null, bool tracked = true)
+        public async Task<T> Get(Expression<Func<T, bool>> filter = null, bool tracked = true)
         {
             IQueryable<T> query = dbSet;
             if (!tracked)
@@ -48,7 +48,7 @@ namespace DnDAPI.Repository
             return await query.FirstOrDefaultAsync();
         }
 
-        public async Task RemoveAsync(T entity)
+        public async Task Remove(T entity)
         {
             dbSet.Remove(entity);
             await SaveAsync();
