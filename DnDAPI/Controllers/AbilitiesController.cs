@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DnDAPI.Models;
 using System.Net;
+using DnDAPI.Contracts;
 
 namespace DnDApi.Controllers
 {
@@ -14,12 +15,12 @@ namespace DnDApi.Controllers
     [ApiController]
     public class AbilitiesController : ControllerBase
     {
-        private readonly RepositoryContext _context;
+        private readonly IAbilityRepository _repo;
         protected ResponseHandler _response;
 
-        public AbilitiesController(RepositoryContext context)
+        public AbilitiesController(IAbilityRepository repo)
         {
-            _context = context;
+            _repo = repo;
             _response = new ResponseHandler();
         }
 
@@ -28,7 +29,7 @@ namespace DnDApi.Controllers
         {
             try
             {
-                _response.Result = await _context.Abilities.ToListAsync();
+                _response.Result = await _repo.GetAll();
                 _response.StatusCode = HttpStatusCode.OK;
 
                 return Ok(_response);
@@ -43,96 +44,166 @@ namespace DnDApi.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Ability>> GetAbility(int id)
+        public async Task<ActionResult<ResponseHandler>> GetAbility(int id)
         {
-            if (_context.Abilities == null)
+            try
             {
-                return NotFound();
-            }
-            var ability = await _context.Abilities.FindAsync(id);
+                if (_repo == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
 
-            if (ability == null)
+                if (id == 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+
+                var ability = await _repo.Get(a => a.AbilityId == id);
+
+                if (ability == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
+
+                _response.Result = ability;
+                _response.StatusCode = HttpStatusCode.OK;
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
             {
-                return NotFound();
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.Message };
             }
 
-            return ability;
+            return _response;
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<Ability>>> GetAbilitiesByName([FromQuery] string name)
+        public async Task<ActionResult<ResponseHandler>> GetAbilitiesByName([FromQuery] string name)
         {
-            if (_context.Abilities == null)
+            try
             {
-                return NotFound();
+                if (_repo == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    return NotFound(_response);
+                }
+
+                _response.Result = await _repo.GetAll(a => a.Name.StartsWith(name));
+                _response.StatusCode = HttpStatusCode.OK;
+
+                return Ok(_response);
             }
-            return await _context.Abilities.Where(a => a.Name.StartsWith(name)).ToListAsync();
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.Message };
+            }
+
+            return _response;
         }
 
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> PutAbility(int id, Ability ability)
+        public async Task<ActionResult<ResponseHandler>> PutAbility(int id, Ability ability)
         {
-            if (id != ability.AbilityId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(ability).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                if (id != ability.AbilityId)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest();
+                }
+
+                try
+                {
+                    await _repo.Update(ability);
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!AbilityExists(id))
+                    {
+                        _response.StatusCode = HttpStatusCode.NotFound;
+                        return NotFound(_response);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                _response.StatusCode = HttpStatusCode.NoContent;
+
+                return Ok(_response);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!AbilityExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.Message };
             }
 
-            return NoContent();
+            return _response;
         }
 
         [HttpPost]
-        public async Task<ActionResult<Ability>> PostAbility(Ability ability)
+        public async Task<ActionResult<ResponseHandler>> PostAbility(Ability ability)
         {
-            if (_context.Abilities == null)
+            try
             {
-                return Problem("Entity set 'RepositoryContext.Abilities'  is null.");
-            }
-            _context.Abilities.Add(ability);
-            await _context.SaveChangesAsync();
+                await _repo.Create(ability);
+                _response.Result = ability;
+                _response.StatusCode = HttpStatusCode.Created;
 
-            return CreatedAtAction("GetAbility", new { id = ability.AbilityId }, ability);
+                return CreatedAtAction("GetAbility", new { id = ability.AbilityId }, _response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.Message };
+            }
+
+            return _response;
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteAbility(int id)
+        public async Task<ActionResult<ResponseHandler>> DeleteAbility(int id)
         {
-            if (_context.Abilities == null)
+            try
             {
-                return NotFound();
+                if (_repo == null)
+                {
+                    return NotFound();
+                }
+
+                var ability = await _repo.Get(c => c.AbilityId == id);
+
+                if (ability == null)
+                {
+                    return NotFound();
+                }
+
+                await _repo.Remove(ability);
+                _response.StatusCode = HttpStatusCode.NoContent;
+
+                return Ok(_response);
             }
-            var ability = await _context.Abilities.FindAsync(id);
-            if (ability == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { ex.Message };
             }
 
-            _context.Abilities.Remove(ability);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return _response;
         }
 
         private bool AbilityExists(int id)
         {
-            return (_context.Abilities?.Any(e => e.AbilityId == id)).GetValueOrDefault();
+            var ability = _repo.Get(a => a.AbilityId == id);
+
+            return ability != null;
         }
     }
 }
